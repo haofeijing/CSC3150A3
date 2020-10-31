@@ -1,6 +1,8 @@
 ﻿#include "virtual_memory.h"
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include "stdio.h"
+#include <iostream>
 
 __device__ void init_invert_page_table(VirtualMemory *vm) {
 
@@ -34,17 +36,25 @@ __device__ void vm_init(VirtualMemory *vm, uchar *buffer, uchar *storage,
 
 __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
   /* Complate vm_read function to read single element from data buffer */
-	printf("buffer size")
-  return 123; //TODO
+	int page_offset = addr % 32;
+	int page_num = addr / 32;
+	int phy_addr = page_num * vm->PAGESIZE + page_offset;
+	return vm->buffer[phy_addr]; //TODO
 }
 
 __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
   /* Complete vm_write function to write value into data buffer */
+	int page_offset = addr % 32;
+	int page_num = addr / 32;
+	int phy_addr = page_num * vm->PAGESIZE + page_offset;
+	vm->buffer[phy_addr] = value;
+
 }
 
 __device__ void vm_snapshot(VirtualMemory *vm, uchar *results, int offset,
                             int input_size) {
   /* Complete snapshot function togther with vm_read to load elements from data
    * to result buffer */
+
 }
 
