@@ -3,6 +3,7 @@
 #include <cuda_runtime.h>
 #include "stdio.h"
 #include <iostream>
+#include <list>
 
 __device__ void init_invert_page_table(VirtualMemory *vm) {
 
@@ -55,6 +56,6 @@ __device__ void vm_snapshot(VirtualMemory *vm, uchar *results, int offset,
                             int input_size) {
   /* Complete snapshot function togther with vm_read to load elements from data
    * to result buffer */
-
+	
 }
 
