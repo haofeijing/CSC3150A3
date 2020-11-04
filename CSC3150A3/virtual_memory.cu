@@ -45,10 +45,17 @@ __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
 
 __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
   /* Complete vm_write function to write value into data buffer */
-	int page_offset = addr % 32;
-	int page_num = addr / 32;
-	int phy_addr = page_num * vm->PAGESIZE + page_offset;
-	vm->buffer[phy_addr] = value;
+	int page_offset = addr << 27;
+  int page_num = addr >> 5;
+  u32 current = vm->invert_page_table[page_num];
+  u32 phy_addr = current * vm->PAGESIZE + page_offset;
+  if (current == 0x80000000) {
+      vm->invert_page_table[page_num] = ;
+  }
+	
+  vm->buffer[phy_addr] = value;
+  
+
 
 }
 
