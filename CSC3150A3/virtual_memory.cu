@@ -62,6 +62,7 @@ __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
 	for (int i = 0; i < vm->PAGESIZE; i++) {
 		vm->storage[old * vm->PAGESIZE + i] = vm->buffer[frame_num * vm->PAGESIZE + i];
 		vm->buffer[frame_num * vm->PAGESIZE + i] = vm->storage[page_num * vm->PAGESIZE + i];
+		vm->invert_page_table[least_used_slot] = page_num;
 	}
 	return vm->buffer[frame_num * vm->PAGESIZE + page_offset];
 
@@ -98,7 +99,7 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
 		}
 		ll.size += 1;
 
-		vm->invert_page_table[empty_slot] = page_num;
+		
 	}
 	else {
 		node * head = ll.head;
@@ -113,6 +114,7 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
 			vm->storage[page_num * vm->PAGESIZE + i] = vm->buffer[frame_num * vm->PAGESIZE + i];
 		}
 	}
+	vm->invert_page_table[empty_slot] = page_num;
 	u32 phy_addr = frame_num * vm->PAGESIZE + page_offset;
 	vm->buffer[phy_addr] = value;
 	printf("write %c\n", *(vm->buffer + phy_addr));
