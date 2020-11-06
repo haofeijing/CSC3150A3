@@ -4,6 +4,9 @@
 #include "stdio.h"
 #include <iostream>
 #include <list>
+#include <queue>
+
+__device__ linked_list ll;
 
 __device__ void init_invert_page_table(VirtualMemory *vm) {
 
@@ -41,16 +44,27 @@ __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
 	printf("vm_read\n");
 	int page_offset = addr % 32;
 	int page_num = addr / 32;
-	u32 current = vm->invert_page_table[page_num];
-	printf("frame = %ld\n", current);
-	int frame_num = vm->invert_page_table[page_num + vm->PAGE_ENTRIES];
-	u32 phy_addr = frame_num * vm->PAGESIZE + page_offset;
-	//if (current = 0x8000000) {
-	//	*vm->pagefault_num_ptr += 1;
-	//}
-	//else {
-	//	 
-	//}
+	for (int i = 0; i < vm->PAGE_ENTRIES; i++) {
+		if (vm->invert_page_table[i] == page_num) {
+			int phy_addr = vm->invert_page_table[i + page_num] * vm->PAGESIZE + page_offset;
+			return vm->buffer[phy_addr];
+		}
+	}
+	*vm->pagefault_num_ptr += 1; 
+	node * head = ll.head;
+	int least_used_slot = head->value;
+	ll.head = head->prev;
+	ll.head->next = NULL;
+	ll.size -= 1;
+	
+	int old = vm->invert_page_table[least_used_slot];
+	int frame_num = vm->invert_page_table[least_used_slot + vm->PAGE_ENTRIES];
+	for (int i = 0; i < vm->PAGESIZE; i++) {
+		vm->storage[old * vm->PAGESIZE + i] = vm->buffer[frame_num * vm->PAGESIZE + i];
+		vm->buffer[frame_num * vm->PAGESIZE + i] = vm->storage[page_num * vm->PAGESIZE + i];
+	}
+	return vm->buffer[frame_num * vm->PAGESIZE + page_offset];
+
 
 	
 }
@@ -59,23 +73,57 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
   /* Complete vm_write function to write value into data buffer */
 	int page_offset = addr % 32;
 	int page_num = addr / 32;
-	u32 current = vm->invert_page_table[page_num];  // get current valid/invalid code
-	int frame_num = vm->invert_page_table[page_num + vm->PAGE_ENTRIES];
+	int empty_slot = -1;
+	for (int i = 0; i < vm->PAGE_ENTRIES; i++) {
+		if (vm->invert_page_table[i] == 0x80000000) {
+			empty_slot = i;
+		}
+	}
+	//printf("empty = %d\n", empty_slot);
+	int frame_num;
+	if (empty_slot != -1) {
+		frame_num = vm->invert_page_table[empty_slot + vm->PAGE_ENTRIES];
+
+		//q.push(empty_slot);
+		node tmp;
+		tmp.value = empty_slot;
+		if (ll.size == 0) {
+			ll.tail = &tmp;
+			ll.head = &tmp;
+		}
+		else {
+			ll.tail->prev = &tmp;
+			tmp.next = ll.tail;
+			ll.tail = &tmp;
+		}
+		ll.size += 1;
+
+		vm->invert_page_table[empty_slot] = page_num;
+	}
+	else {
+		node * head = ll.head;
+		int least_used_slot = head->value;
+		ll.head = head->prev;
+		ll.head->next = NULL;
+		ll.size -= 1;
+
+
+		frame_num = vm->invert_page_table[least_used_slot + vm->PAGE_ENTRIES];
+		for (int i = 0; i < vm->PAGESIZE; i++) {
+			vm->storage[page_num * vm->PAGESIZE + i] = vm->buffer[frame_num * vm->PAGESIZE + i];
+		}
+	}
 	u32 phy_addr = frame_num * vm->PAGESIZE + page_offset;
-	printf("curr frame = %ld\n", frame_num);
-	if (current == 0x80000000) {
-		*vm->pagefault_num_ptr += 1; // add one more page fault
-		/*printf("fault num = %d\n", vm->pagefault_num_ptr);*/	
-		vm->invert_page_table[page_num] = page_num;
-	} 
 	vm->buffer[phy_addr] = value;
 	printf("write %c\n", *(vm->buffer + phy_addr));
-	vm->invert_page_table[page_num + vm->PAGE_ENTRIES] = frame_num;
+
+
+
 
 	//printf("offset = %ld\n", page_offset);
 	//printf("page_num = %ld\n", page_num);
 	//printf("current phy_addr = %08" PRIx32 "\n", current);
-
+	
 
   
 
@@ -86,6 +134,8 @@ __device__ void vm_snapshot(VirtualMemory *vm, uchar *results, int offset,
                             int input_size) {
   /* Complete snapshot function togther with vm_read to load elements from data
    * to result buffer */
-	
+	for (int i = offset; i < input_size; i++) {
+		results[i] = vm_read(vm, i);
+	}
 }
 

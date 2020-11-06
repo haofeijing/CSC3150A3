@@ -5,11 +5,14 @@
 
 __device__ void user_program(VirtualMemory *vm, uchar *input, uchar *results,
                              int input_size) {
-  for (int i = 0; i < 32; i++)
+  for (int i = 0; i < input_size; i++)
     vm_write(vm, i, input[i]);
 
-  //for (int i = input_size - 1; i >= input_size - 32769; i--)
-  //  int value = vm_read(vm, i);
+  for (int i = input_size - 1; i >= input_size - 32769; i--) {
+	  uchar value = vm_read(vm, i);
+	  printf("val = %c\n", value);
+  }
+    
 
   //for (int i = 0; i < 64; i++) {
 	 // uchar value = vm_read(vm, i);
@@ -18,5 +21,5 @@ __device__ void user_program(VirtualMemory *vm, uchar *input, uchar *results,
 	  
 		
 
-  //vm_snapshot(vm, results, 0, input_size);
+  vm_snapshot(vm, results, 0, input_size);
 }

@@ -4,6 +4,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <inttypes.h>
+#include <iostream>
+#include <queue>
 
 typedef unsigned char uchar;
 typedef uint32_t u32;
@@ -31,6 +33,19 @@ __device__ uchar vm_read(VirtualMemory *vm, u32 addr);
 __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value);
 __device__ void vm_snapshot(VirtualMemory *vm, uchar *results, int offset,
                             int input_size);
+
+struct node {
+	int value;
+	struct node * next = NULL;
+	struct node * prev = NULL; 
+};
+
+struct linked_list {
+	int size = 0;
+	struct node * head = NULL;
+	struct node * tail = NULL;
+};
+
 
 
 #endif
