@@ -47,6 +47,18 @@ __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
 	for (int i = 0; i < vm->PAGE_ENTRIES; i++) {
 		if (vm->invert_page_table[i] == page_num) {
 			int phy_addr = vm->invert_page_table[i + page_num] * vm->PAGESIZE + page_offset;
+			for (node * s = ll.tail; s.next != NULL; s = s.next) {
+				if (s.value == i) {
+					node * tmp = s;
+					tmp->prev->next = tmp->next;
+					tmp->next->prev = tmp->prev;
+					ll.head->next = tmp;
+					tmp->prev = ll.head;
+					tmp->next = NULL;
+					ll.head = tmp;
+					break;
+				}
+			}
 			return vm->buffer[phy_addr];
 		}
 	}
@@ -62,8 +74,8 @@ __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
 	for (int i = 0; i < vm->PAGESIZE; i++) {
 		vm->storage[old * vm->PAGESIZE + i] = vm->buffer[frame_num * vm->PAGESIZE + i];
 		vm->buffer[frame_num * vm->PAGESIZE + i] = vm->storage[page_num * vm->PAGESIZE + i];
-		vm->invert_page_table[least_used_slot] = page_num;
 	}
+	vm->invert_page_table[least_used_slot] = page_num;
 	return vm->buffer[frame_num * vm->PAGESIZE + page_offset];
 
 
@@ -75,14 +87,24 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
 	int page_offset = addr % 32;
 	int page_num = addr / 32;
 	int empty_slot = -1;
-	for (int i = 0; i < vm->PAGE_ENTRIES; i++) {
+	bool hit = false;
+	for (int i = vm->PAGE_ENTRIES-1; i > -1; i--) {
+		if (vm->invert_page_table[i] == page_num) {
+			empty_slot = i;
+			hit = true;
+			break;
+		}
 		if (vm->invert_page_table[i] == 0x80000000) {
 			empty_slot = i;
 		}
 	}
 	//printf("empty = %d\n", empty_slot);
 	int frame_num;
+	if (!hit) {
+		*vm->pagefault_num_ptr += 1;
+	}
 	if (empty_slot != -1) {
+		// vm->invert_page_table[empty_slot] = page_num;
 		frame_num = vm->invert_page_table[empty_slot + vm->PAGE_ENTRIES];
 
 		//q.push(empty_slot);
