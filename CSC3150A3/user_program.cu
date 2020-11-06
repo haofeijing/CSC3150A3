@@ -5,16 +5,16 @@
 
 __device__ void user_program(VirtualMemory *vm, uchar *input, uchar *results,
                              int input_size) {
-  for (int i = 0; i < 64; i++)
+  for (int i = 0; i < 32; i++)
     vm_write(vm, i, input[i]);
 
   //for (int i = input_size - 1; i >= input_size - 32769; i--)
   //  int value = vm_read(vm, i);
 
-  for (int i = 0; i < 64; i++) {
-	  uchar value = vm_read(vm, i);
-	  //printf("val = %s\n", value);
-  }
+  //for (int i = 0; i < 64; i++) {
+	 // uchar value = vm_read(vm, i);
+	 // //printf("val = %s\n", value);
+  //}
 	  
 		
 

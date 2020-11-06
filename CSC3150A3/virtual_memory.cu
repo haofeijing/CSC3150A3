@@ -43,18 +43,15 @@ __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
 	int page_num = addr / 32;
 	u32 current = vm->invert_page_table[page_num];
 	printf("frame = %ld\n", current);
-	int frame_num;
-	int phy_addr; 
-	if (current = 0x800000000) {
-		*vm->pagefault_num_ptr += 1; // add one more page fault
-	}
-	else {
-		printf("read frame num\n");
-		frame_num = current; 
-		phy_addr = frame_num * vm->INVERT_PAGE_TABLE_SIZE + page_offset; 
-		printf("value = %c\n", vm->buffer[phy_addr]);
-		return vm->buffer[phy_addr];
-	}
+	int frame_num = vm->invert_page_table[page_num + vm->PAGE_ENTRIES];
+	u32 phy_addr = frame_num * vm->PAGESIZE + page_offset;
+	//if (current = 0x8000000) {
+	//	*vm->pagefault_num_ptr += 1;
+	//}
+	//else {
+	//	 
+	//}
+
 	
 }
 
@@ -62,27 +59,19 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
   /* Complete vm_write function to write value into data buffer */
 	int page_offset = addr % 32;
 	int page_num = addr / 32;
-	u32 current = vm->invert_page_table[page_num];  // get current frame number
-	int frame_num;
-	u32 phy_addr;
-	printf("curr frame = %ld\n", current);
+	u32 current = vm->invert_page_table[page_num];  // get current valid/invalid code
+	int frame_num = vm->invert_page_table[page_num + vm->PAGE_ENTRIES];
+	u32 phy_addr = frame_num * vm->PAGESIZE + page_offset;
+	printf("curr frame = %ld\n", frame_num);
 	if (current == 0x80000000) {
 		*vm->pagefault_num_ptr += 1; // add one more page fault
-		/*printf("fault num = %d\n", vm->pagefault_num_ptr);*/
-		frame_num = page_num; 
-		phy_addr = frame_num * vm->PAGESIZE + page_offset;
-		vm->buffer[phy_addr] = value;
-		printf("write %c\n", *(vm->buffer + phy_addr));
-		vm->invert_page_table[page_num] = frame_num;
-	}
-	else {
-		frame_num = current;
-		phy_addr = frame_num * vm->PAGESIZE + page_offset;
-		vm->buffer[phy_addr] = value;
-		printf("write %c\n", *(vm->buffer + phy_addr));
-		vm->invert_page_table[page_num] = frame_num;
+		/*printf("fault num = %d\n", vm->pagefault_num_ptr);*/	
+		vm->invert_page_table[page_num] = page_num;
+	} 
+	vm->buffer[phy_addr] = value;
+	printf("write %c\n", *(vm->buffer + phy_addr));
+	vm->invert_page_table[page_num + vm->PAGE_ENTRIES] = frame_num;
 
-	}
 	//printf("offset = %ld\n", page_offset);
 	//printf("page_num = %ld\n", page_num);
 	//printf("current phy_addr = %08" PRIx32 "\n", current);
