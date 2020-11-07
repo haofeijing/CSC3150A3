@@ -5,7 +5,7 @@
 
 __device__ void user_program(VirtualMemory *vm, uchar *input, uchar *results,
                              int input_size) {
-  for (int i = 0; i < 128; i++)
+  for (int i = 0; i < 2; i++)
     vm_write(vm, i, input[i]);
 
   //for (int i = input_size - 1; i >= input_size - 32769; i--) {
@@ -21,5 +21,5 @@ __device__ void user_program(VirtualMemory *vm, uchar *input, uchar *results,
 	  
 		
 
-  vm_snapshot(vm, results, 0, input_size);
+  //vm_snapshot(vm, results, 0, input_size);
 }

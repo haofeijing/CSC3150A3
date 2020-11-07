@@ -104,26 +104,41 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
 		*vm->pagefault_num_ptr += 1;
 	}
 	if (empty_slot != -1) {
+		// hit or find empty
+		printf("slot = %d\n", empty_slot);
 		// vm->invert_page_table[empty_slot] = page_num;
 		frame_num = vm->invert_page_table[empty_slot + vm->PAGE_ENTRIES];
-
+		printf("frame = %d\n", frame_num);
 		//q.push(empty_slot);
-		node * tmp;
-		tmp->value = empty_slot;
+		struct node tmp;
+		//printf("up to here\n");
+		printf("val = %d\n", empty_slot);
+		tmp.value = empty_slot;
+		printf("up to here\n");
 		if (ll.size == 0) {
-			ll.tail = tmp;
-			ll.head = tmp;
+			printf("up to here\n");
+			ll.tail = &tmp;
+			ll.head = &tmp;
+			printf("tail value = %d\n", ll.tail->value);
+			printf("head value = %d\n", ll.head->value);
 		}
 		else {
-			ll.tail->prev = tmp;
-			tmp->next = ll.tail;
-			ll.tail = tmp;
+
+			printf("else\n");
+			ll.tail->prev = &tmp;
+			printf("correct\n");
+			tmp.next = ll.tail;
+			printf("correct\n");
+			ll.tail = &tmp;
+			printf("tail value = %d\n", ll.tail->value);
+			printf("head value = %d\n", ll.head->value);
 		}
 		ll.size += 1;
-
+		printf("up to here\n");
 		
 	}
 	else {
+		// swap
 		node * head = ll.head;
 		int least_used_slot = head->value;
 		ll.head = head->prev;
@@ -136,6 +151,7 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
 			vm->storage[page_num * vm->PAGESIZE + i] = vm->buffer[frame_num * vm->PAGESIZE + i];
 		}
 	}
+	printf("up to here\n");
 	vm->invert_page_table[empty_slot] = page_num;
 	u32 phy_addr = frame_num * vm->PAGESIZE + page_offset;
 	vm->buffer[phy_addr] = value;
