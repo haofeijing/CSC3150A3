@@ -44,42 +44,30 @@ __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
 	printf("vm_read\n");
 	int page_offset = addr % 32;
 	int page_num = addr / 32;
-	for (int i = 0; i < vm->PAGE_ENTRIES; i++) {
-		if (vm->invert_page_table[i] == page_num) {
-			int phy_addr = vm->invert_page_table[i + page_num] * vm->PAGESIZE + page_offset;
-			for (node * s = ll.tail; s->next != NULL; s = s->next) {
-				if (s->value == i) {
-					node * tmp = s;
-					tmp->prev->next = tmp->next;
-					tmp->next->prev = tmp->prev;
-					ll.head->next = tmp;
-					tmp->prev = ll.head;
-					tmp->next = NULL;
-					ll.head = tmp;
-					break;
-				}
-			}
-			return vm->buffer[phy_addr];
+
+	bool hit = false;
+	int hit_slot = -1;
+	for (int i = vm->PAGE_ENTRIES-1; i > -1; i--) {
+		if (vm->invert_page_table[i] != 0x80000000) {
+			vm->invert_page_table[i] += (1 << 13);
+		}
+
+		if (vm->invert_page_table[i] % (1 << 12) == page_num) {
+			hit = true;
+			hit_slot = i;
 		}
 	}
-	*vm->pagefault_num_ptr += 1; 
-	node * head = ll.head;
-	int least_used_slot = head->value;
-	ll.head = head->prev;
-	ll.head->next = NULL;
-	ll.size -= 1;
-	
-	int old = vm->invert_page_table[least_used_slot];
-	int frame_num = vm->invert_page_table[least_used_slot + vm->PAGE_ENTRIES];
-	for (int i = 0; i < vm->PAGESIZE; i++) {
-		vm->storage[old * vm->PAGESIZE + i] = vm->buffer[frame_num * vm->PAGESIZE + i];
-		vm->buffer[frame_num * vm->PAGESIZE + i] = vm->storage[page_num * vm->PAGESIZE + i];
-	}
-	vm->invert_page_table[least_used_slot] = page_num;
-	return vm->buffer[frame_num * vm->PAGESIZE + page_offset];
+	int frame_num;
+	// if (hit) {
+	// 	frame_num = vm->invert_page_table[hit_slot + vm->PAGE_ENTRIES];
+	// 	u32 phy_addr = frame_num * vm->PAGESIZE + page_offset;
+	// 	return vm->buffer[phy_addr];
+	// } else {
+		
+	// }
 
 
-	
+	return;
 }
 
 __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
@@ -92,13 +80,14 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
 	// check hit or not
 	for (int i = vm->PAGE_ENTRIES-1; i > -1; i--) {
 		if (vm->invert_page_table[i] != 0x80000000) {
+			if (vm->invert_page_table[i] % (1 << 12) == page_num) {
+				hit = true;
+				hit_slot = i;
+			}
 			vm->invert_page_table[i] += (1 << 13);
 		}
 
-		if (vm->invert_page_table[i] % (1 << 12) == page_num) {
-			hit = true;
-			hit_slot = i;
-		}
+		
 	}
 	int frame_num;
 	if (hit) {
@@ -121,7 +110,7 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
 			int least_used_slot;
 			for (int i = vm->PAGE_ENTRIES-1; i > -1; i--) {
 				if (vm->invert_page_table[i] != 0x80000000) {
-					int tmp_time = vm->invert_page_table[i] % (1 << 13);
+					int tmp_time = vm->invert_page_table[i] / (1 << 13);
 					if (tmp_time > max_time) {
 						max_time = tmp_time;
 						least_used_slot = i;
