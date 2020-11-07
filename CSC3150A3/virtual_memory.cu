@@ -47,8 +47,8 @@ __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
 	for (int i = 0; i < vm->PAGE_ENTRIES; i++) {
 		if (vm->invert_page_table[i] == page_num) {
 			int phy_addr = vm->invert_page_table[i + page_num] * vm->PAGESIZE + page_offset;
-			for (node * s = ll.tail; s.next != NULL; s = s.next) {
-				if (s.value == i) {
+			for (node * s = ll.tail; s->next != NULL; s = s->next) {
+				if (s->value == i) {
 					node * tmp = s;
 					tmp->prev->next = tmp->next;
 					tmp->next->prev = tmp->prev;
@@ -108,16 +108,16 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
 		frame_num = vm->invert_page_table[empty_slot + vm->PAGE_ENTRIES];
 
 		//q.push(empty_slot);
-		node tmp;
-		tmp.value = empty_slot;
+		node * tmp;
+		tmp->value = empty_slot;
 		if (ll.size == 0) {
-			ll.tail = &tmp;
-			ll.head = &tmp;
+			ll.tail = tmp;
+			ll.head = tmp;
 		}
 		else {
-			ll.tail->prev = &tmp;
-			tmp.next = ll.tail;
-			ll.tail = &tmp;
+			ll.tail->prev = tmp;
+			tmp->next = ll.tail;
+			ll.tail = tmp;
 		}
 		ll.size += 1;
 
