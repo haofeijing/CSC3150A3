@@ -6,7 +6,6 @@
 #include <list>
 #include <queue>
 
-__device__ linked_list ll;
 
 __device__ void init_invert_page_table(VirtualMemory *vm) {
 
@@ -41,7 +40,7 @@ __device__ void vm_init(VirtualMemory *vm, uchar *buffer, uchar *storage,
 __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
   /* Complate vm_read function to read single element from data buffer */
 
-	printf("vm_read\n");
+	// printf("vm_read\n");
 	int page_offset = addr % 32;
 	int page_num = addr / 32;
 
@@ -62,6 +61,7 @@ __device__ uchar vm_read(VirtualMemory *vm, u32 addr) {
 	if (hit) {
 		frame_num = vm->invert_page_table[hit_slot + vm->PAGE_ENTRIES];
 		u32 phy_addr = frame_num * vm->PAGESIZE + page_offset;
+		vm->invert_page_table[hit_slot] = page_num;
 		return vm->buffer[phy_addr];
 	} else {
 		*vm->pagefault_num_ptr += 1; // add page fault;
@@ -119,7 +119,7 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
 		frame_num = vm->invert_page_table[hit_slot + vm->PAGE_ENTRIES];
 		u32 phy_addr = frame_num * vm->PAGESIZE + page_offset;
 		vm->buffer[phy_addr] = value;
-
+		vm->invert_page_table[hit_slot] = page_num;
 		
 	} else {
 		*vm->pagefault_num_ptr += 1; // add page fault;
@@ -160,6 +160,7 @@ __device__ void vm_write(VirtualMemory *vm, u32 addr, uchar value) {
 			
 		}
 	}
+	printf("write: %c\n", value);
 
 	
 
@@ -174,6 +175,7 @@ __device__ void vm_snapshot(VirtualMemory *vm, uchar *results, int offset,
    * to result buffer */
 	for (int i = offset; i < input_size; i++) {
 		results[i] = vm_read(vm, i);
+		printf("snapshot = %c\n", results[i]);
 	}
 }
 

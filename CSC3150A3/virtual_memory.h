@@ -36,17 +36,6 @@ __device__ void vm_snapshot(VirtualMemory *vm, uchar *results, int offset,
 
 
 
-struct node {
-	int value;
-	struct node * next = NULL;
-	struct node * prev = NULL; 
-};
-
-struct linked_list {
-	int size = 0;
-	struct node * head = NULL;
-	struct node * tail = NULL;
-};
 
 
 
